@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en-CA">
+<meta charset="UTF-8">
+<html>
+
+<head>
+	<title>Weather Web App</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+	
+	<!--using Phil's google key-->
+	
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDsYRODpo9qmABTOO2AmYvqN6UuOh7Z_w&libraries=places&callback=initMap" async defer></script>
+ 
+</head>
+
+<body>
+	<div style="width:75%;">
+		<input type="text" name="city" id="city" value="Toronto">
+		<canvas id="myChart"></canvas>
+		
+	</div>
+	<script>
+	
+		
+		var chart;
+	
+		function loadWeather(location) {//ajax call to get the 5 day forcast in a JSON object. 
+		
+			<!-- Forcast API REF-->https://openweathermap.org/forecast5  scroll to the bottom under JSON header-->
+			var url = 'https://api.openweathermap.org/data/2.5/forecast?q='+location+'&appid=e00e1a0fa193f245f7a19bc0ced27885';
+
+			  $.ajax({
+				url: url,
+				type: 'GET',
+				dataType: 'JSON',
+				success: function(resp) {
+					update_City1(resp);
+					
+				}
+			
+			  });
+		}
+
+		
+		function getLocation() {
+			//get location using navigator
+			if(navigator.geolocation){
+				navigator.geolocation.getCurrentPosition(showPosition);//or could create an annonymous function inside the ()
+			}
+			else{
+				console.log("Geolocation is not supported by this browser.");
+			}
+		}
+
+		function showPosition(position) {
+			//display the latitude and longitude
+			
+			console.log(position.coords.latitude);
+			console.log(position.coords.longitude);
+			
+		} 
+				
+		function initMap() {
+		
+			var city = document.getElementById('city');
+			
+			var autocomplete = new google.maps.places.Autocomplete(city);
+			
+			google.maps.event.addListener(autocomplete, 'place_changed', function(){
+				
+			
+				var lat = autocomplete.getPlace().geometry.location.lat();
+				
+				var lon = autocomplete.getPlace().geometry.location.lng();
+				
+				console.log(lat);
+				
+				console.log(lon);
+				
+				loadWeather(document.getElementById('city').value);
+				console.log("Location"+document.getElementById('city').value);
+				
+				
+			
+			});
+
+		}
+	
+		
+		
+		
+			
+			//2-d chart only uses x and y axis
+		var ctx = document.getElementById('myChart').getContext('2d');// CanvasRenderingContext2D
+		
+		chart = new Chart(ctx,{
+		
+			type: 'bar',
+			data: {
+			
+				labels:['January','February','March','April','May'],//x-axis
+				datasets:[//each line is an object
+					{   type:'line',
+						label:"Temperature Oakville",
+						fill:true,
+						backgroundColor:'rgba(124,44,55,0.4)',
+						borderColor:'rgb(124,44,55)',
+						data:[30,14,140,15,80]//y-axis
+					},
+					{   type:'bar',
+						yAxisID: 'Rain',
+						label:"Rain",
+						fill:true,
+						backgroundColor:'rgba(30,44,100,0.4)',
+						borderColor:'rgb(50,55,100)',
+						data:[30,14,140,15,80]//y-axis
+					}
+					,
+					{   type:'line',
+						label:"Temperature Mississauga",
+						fill:false,
+						backgroundColor:'rgba(0,255,0,0.4)',
+						borderColor:'green',
+						data:[50,22,192,1,75]
+					}
+				]
+			
+			},
+			options:{
+			
+				//responsive: false
+				scales:{
+					xAxes: [{
+						display: true,
+						scaleLabel:{
+							display: true,
+							labelString:'Date'
+						}
+					}],
+					yAxes:[{
+						display: true,
+						scaleLabel:{
+							display: true,
+							labelString:'Temperature'
+						}
+					},
+					{
+						id: 'Rain',
+						display: true,
+						position:'right',
+						scaleLabel:{
+							display: true,
+							labelString:'Rainfall'
+						}
+					}
+					
+					
+					]
+				
+				}
+			}
+		
+		});//context, data values 
+	
+
+	function update_City1(resp) {//updates first dataset/city
+			
+			
+			chart.data.datasets[0].label=resp.city.name;
+			//resp.name;
+		   
+			var temps=new Array();
+			var dates=new Array();
+			var rainfall=new Array();
+			
+			$.each(resp.list, function(index, val) {
+				temps.push((val.main.temp)-273.15);
+				dates.push(val.dt_txt);
+				
+			/*	RAINFALL Got errors trying to read the rain value because there's a 3 in the identifier. Checked stacked overflow and they said
+			to use rain.['3h'] but i got an error with that too.
+			*/
+			  //rainfall.push(val.rain['3h']);
+			 
+				
+			});
+			
+			
+			chart.data.datasets[0].data=temps;
+			chart.data.datasets[1].data=rainfall;
+		
+			chart.data.labels=dates;
+			
+			chart.update();
+			
+		
+		}
+		
+			
+       
+		
+		initMap();	
+		//loadWeather(document.getElementById('city').value);
+		
+		
+		//{} = object
+		
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,1 @@
+A web page that uses google maps api and open weather api to find the weather forecast of an entered location.
